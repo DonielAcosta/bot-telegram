@@ -390,39 +390,40 @@ class Bots extends Controller {
 
 	function instalar(){
 
-		$a = "ALTER TABLE bots CHANGE Id id";
-		$this->db->query($a);
-		// if (!$this->db->table_exists('bots')) {
-		// 	$mSQL="CREATE TABLE `bots` (
-		// 	  `id` int(11) NOT NULL AUTO_INCREMENT,
-		// 	  `nombre` varchar(50) DEFAULT NULL,
-		// 	  `token` varchar(80) DEFAULT NULL,
-		// 	  `descripcion` text DEFAULT NULL,
-		// 	  `url` varchar(100) DEFAULT NULL,
-		// 	  `comandos` text DEFAULT NULL,
-		// 	  PRIMARY KEY (`id`),
-		// 	  UNIQUE KEY `nombre` (`nombre`)
-		// 	) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4";
-		// 	$this->db->query($mSQL);
-		// }
-		// $campos = $this->db->list_fields('bots');
-		// if(!in_array('nombre', $campos)) {
-		// 	$this->db->query("ALTER TABLE bots ADD COLUMN nombre VARCHAR(50) NULL DEFAULT NULL");
-		// }
-		// $campos = $this->db->list_fields('bots');
-		// if(!in_array('token', $campos)) {
-		// 	$this->db->query("ALTER TABLE bots ADD COLUMN token VARCHAR(50) NULL DEFAULT NULL");
-		// }
-		// if(!in_array('descripcion', $campos)) {
-		// 	$this->db->query("ALTER TABLE bots ADD COLUMN descripcion TEXT(200) NULL DEFAULT NULL");
-		// }
-		// if(!in_array('url', $campos)) {
-		// 	$this->db->query("ALTER TABLE bots ADD COLUMN url VARCHAR(50) NULL DEFAULT NULL");
-		// }
-		// if(!in_array('comandos', $campos)) {
-		// 	$this->db->query("ALTER TABLE bots ADD COLUMN comandos TEXT(200) NULL DEFAULT NULL");
-		// }
-
+		
+		if (!$this->db->table_exists('bots')) {
+			$mSQL="CREATE TABLE `bots` (
+			  `id` int(11) NOT NULL AUTO_INCREMENT,
+			  `nombre` varchar(50) DEFAULT NULL,
+			  `token` varchar(80) DEFAULT NULL,
+			  `descripcion` text DEFAULT NULL,
+			  `url` varchar(100) DEFAULT NULL,
+			  `comandos` text DEFAULT NULL,
+			  PRIMARY KEY (`id`),
+			  UNIQUE KEY `nombre` (`nombre`)
+			) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4";
+			$this->db->query($mSQL);
+		}
+		$campos = $this->db->list_fields('bots');
+		if(!in_array('nombre', $campos)) {
+			$this->db->query("ALTER TABLE bots ADD COLUMN nombre VARCHAR(50) NULL DEFAULT NULL");
+		}
+		$campos = $this->db->list_fields('bots');
+		if(!in_array('token', $campos)) {
+			$this->db->query("ALTER TABLE bots ADD COLUMN token VARCHAR(50) NULL DEFAULT NULL");
+		}
+		if(!in_array('descripcion', $campos)) {
+			$this->db->query("ALTER TABLE bots ADD COLUMN descripcion TEXT(200) NULL DEFAULT NULL");
+		}
+		if(!in_array('url', $campos)) {
+			$this->db->query("ALTER TABLE bots ADD COLUMN url VARCHAR(50) NULL DEFAULT NULL");
+		}
+		if(!in_array('comandos', $campos)) {
+			$this->db->query("ALTER TABLE bots ADD COLUMN comandos TEXT(200) NULL DEFAULT NULL");
+		}
+		
+		// $a = 'DROP TABLE bots';
+		// $this->db->query($a);
 		//$campos=$this->db->list_fields('bots');
 		//if(!in_array('<#campo#>',$campos)){ }
 	}

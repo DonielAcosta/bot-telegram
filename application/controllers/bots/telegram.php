@@ -299,9 +299,9 @@ class Telegram extends Controller {
 			);
 			echo json_encode($rt);
 		}else{
-			// echo $edit->output;
-			$conten['form']  =&  $edit;
-			$data['content']  =  $this->load->view('view_bots', $conten, false);
+			echo $edit->output;
+			// $conten['form']  =&  $edit;
+			// $data['content']  =  $this->load->view('view_bots', $conten, false);
 		}
 	}
 
