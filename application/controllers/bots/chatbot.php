@@ -1,8 +1,6 @@
 <?php
 
 class Chatbot extends controller {
-        var $token;
-        var $url;
 
     public function __construct() {
         parent::__construct();
@@ -163,6 +161,35 @@ class Chatbot extends controller {
                         $response .= ' (Ex.'.nformat($row->existen,0).')';
                         $response .= "\n";
                     }
+                    $this ->sendMessages($chatid,'Merida');
+                    $this ->sendMessages($chatid,$response);
+                }
+                $centro = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 12'); 
+                $mSQL = str_replace('busqueda', $message, $centro); //para buscar la consulta en base de datos 
+                $query = $this->db->query(''.$mSQL.''); 
+                if($query->num_rows() > 0){
+                    $response = '';
+                    foreach( $query->result() as $row ){
+                        $response .= $row->codigo;
+                        $response .= ' '.$row->descrip;
+                        $response .= ' (Ex.'.nformat($row->existen,0).')';
+                        $response .= "\n";
+                    }
+                    $this ->sendMessages($chatid,'Centro');
+                    $this ->sendMessages($chatid,$response);
+                }
+                $oriente = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 13'); 
+                $mSQL = str_replace('busqueda', $message, $oriente); //para buscar la consulta en base de datos 
+                $query = $this->db->query(''.$mSQL.''); 
+                if($query->num_rows() > 0){
+                    $response = '';
+                    foreach( $query->result() as $row ){
+                        $response .= $row->codigo;
+                        $response .= ' '.$row->descrip;
+                        $response .= ' (Ex.'.nformat($row->existen,0).')';
+                        $response .= "\n";
+                    }
+                    $this ->sendMessages($chatid,'Oriente');
                     $this ->sendMessages($chatid,$response);
                 }
             break;
