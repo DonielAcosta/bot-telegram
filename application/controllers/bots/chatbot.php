@@ -8,14 +8,12 @@ class Chatbot extends controller {
         parent::__construct();
     }
     
-
     public function index() {
  
         // $this->token = $this->datasis->dameval('SELECT token FROM bots WHERE bot='.$localidad);
         // var $url;
         
         $getupdate = file_get_contents("php://input"); 
-        //memowrite($getupdate);
         if(empty($getupdate)){
             $response = 'No entiendo que me quieres Decir';
             $this->sendMessages($chatid,$response);
@@ -78,8 +76,7 @@ class Chatbot extends controller {
             default:
             $info = 'Despachamos a toda Venezuela desde nuestras sedes de Caracas y Mérida, seguimos orientados en ofrecer productos de calidad, variedad y a excelentes precios, logrando de esta manera ser un excelente aliado para las farmacias del país, además de garantizar el envío rápido y seguro de sus pedidos; ofreciendo el servicio que nuestros clientes merecen de la mano de un increíble talento humano capacitado, comprometido y motivado.';
             'pruebas';
-            $this->sendMessages($chatid,$info);
-
+        
         }
     }
     public function files($chatid,$url){
@@ -133,8 +130,6 @@ class Chatbot extends controller {
         return $resp;
     }
     public function struct($message,$chatid,$name){
-        $info = 'Despachamos a toda Venezuela desde nuestras sedes de Caracas y Mérida, seguimos orientados en ofrecer productos de calidad, variedad y a excelentes precios, logrando de esta manera ser un excelente aliado para las farmacias del país, además de garantizar el envío rápido y seguro de sus pedidos; ofreciendo el servicio que nuestros clientes merecen de la mano de un increíble talento humano capacitado, comprometido y motivado.';
-
         $message = strtoupper($message);
         switch($message){
             case '/START':
@@ -147,7 +142,6 @@ class Chatbot extends controller {
                 $this->sendMessages($chatid,'Desea Conocer el inventario de alguna Sede: escriba la Sede  Merida  Oriente Centro');
                 break;
             case '/IMAGEN':
-                // $response = 'como estas?';
                 $this->img($chatid);
                 break;
             case 'HOLA':
@@ -170,13 +164,10 @@ class Chatbot extends controller {
                         $response .= "\n";
                     }
                     $this ->sendMessages($chatid,$response);
-                }else {
-                    $response = $info;
                 }
             break;
         }
     }
-
 }
 
 ?>
