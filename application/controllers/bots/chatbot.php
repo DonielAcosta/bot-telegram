@@ -8,9 +8,6 @@ class Chatbot extends controller {
     
     public function index() {
  
-        // $this->token = $this->datasis->dameval('SELECT token FROM bots WHERE bot='.$localidad);
-        // var $url;
-        
         $getupdate = file_get_contents("php://input"); 
         if(empty($getupdate)){
             $response = 'No entiendo que me quieres Decir';
@@ -25,37 +22,56 @@ class Chatbot extends controller {
 
         $this->struct($message,$chatid,$name);
         $this->sedes($chatid,$message);
+        $this->direccionSedes($chatid,$message);
     }
 
     private function start($chatid, $name){
-        $response = 'Hola! '.$name.' Me has iniciado @Drocerca_bot';
+        $response = 'Hola! '.'<b>'.$name.'</b>'.' Me has iniciado @Drocerca_bot';
         $this->sendMessages($chatid,$response);
     }
 
     private function inf($chatid){
-        $response = 'Somos una droguería con  17 años de experiencia en el mercado, dedicándonos a la comercialización y distribución de productos y artículos farmacéuticos, farmaquímicos, medicamentos para uso humano, misceláneos, equipos de uso médico, quirúrgicos y odontológicos a nivel nacional, teniendo como objetivo satisfacer las necesidades de nuestros clientes a través de productos de calidad y excelencia en el servicio.';
+        $response =  $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 14');
         $this->sendMessages($chatid,$response);
     }
     
     private function invMerida($chatid){
-        $response = 'Inventario Merida';
+        $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 15');
         $this->sendMessages($chatid,$response);
-        $url = 'https://drocerca.com/inventario/Merida.xlsx';
+        $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 15');
         $this->files($chatid,$url);  
     }
 
     private function invCentro($chatid){
-        $response = 'Inventario Centro';
+        $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 16');
         $this->sendMessages($chatid,$response);
-        $url = 'https://drocerca.com/inventario/Centro.xlsx';
+        $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 16');
         $this->files($chatid,$url);
     }
 
     private function invOriente($chatid){ 
-        $response = 'Inventario Oriente';
+        $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 17');
         $this->sendMessages($chatid,$response);
-        $url = 'https://drocerca.com/inventario/Oriente.xlsx';
+        $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 17');
         $this->files($chatid,$url);
+    }
+    private function direccionMerida($chatid){ 
+        $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 21');
+        $this->sendMessages($chatid,$response);
+        $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 21');
+        $this->sendMessages($chatid,$url);
+    }
+    private function direccionCentro($chatid){ 
+        $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 22');
+        $this->sendMessages($chatid,$response);
+        $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 22');
+        $this->sendMessages($chatid,$url);
+    }
+    private function direccionOriente($chatid){ 
+        $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 23');
+        $this->sendMessages($chatid,$response);
+        $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 23');
+        $this->sendMessages($chatid,$url);
     }
     
     private function sedes($chatid,$message){
@@ -71,16 +87,26 @@ class Chatbot extends controller {
              case 'ORIENTE':
                  $this->invOriente($chatid);
                  break;
-            default:
-            $info = 'Despachamos a toda Venezuela desde nuestras sedes de Caracas y Mérida, seguimos orientados en ofrecer productos de calidad, variedad y a excelentes precios, logrando de esta manera ser un excelente aliado para las farmacias del país, además de garantizar el envío rápido y seguro de sus pedidos; ofreciendo el servicio que nuestros clientes merecen de la mano de un increíble talento humano capacitado, comprometido y motivado.';
-            'pruebas';
-        
+        }
+    }
+    private function direccionSedes($chatid,$message){
+        setlocale(LC_ALL, "en_US.utf8");
+        $message = iconv("utf-8", "ascii//TRANSLIT", $message);
+        switch(strtoupper($message)){
+            case 'DIRECCION DE MERIDA':
+                $this->direccionMerida($chatid);
+                break;
+             case 'DIRECCION DE CENTRO':
+                 $this->direccionCentro($chatid);
+                 break;
+             case 'DIRECCION DE ORIENTE':
+                 $this->direccionOriente($chatid);
+                 break;
         }
     }
     public function files($chatid,$url){
         $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
 
-        // $token  = '5962646144:AAEB075ahUqBJ4nMbL_2qpaZ7HmkVc9T-tA';
         $link   = 'https://api.telegram.org/bot'.$token;
   
         $ch = curl_init();
@@ -104,32 +130,111 @@ class Chatbot extends controller {
     public function sendMessages($chatid,$response){
         $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
 
-        // $token  = '5962646144:AAEB075ahUqBJ4nMbL_2qpaZ7HmkVc9T-tA';
         $link   = 'https://api.telegram.org/bot'.$token;
         $url = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
-        memowrite($url);
         $resp = file_get_contents($url);
         
     }
   
+    public function tecl($chatid){
+        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
+        $reply = "telegram";
+
+        $url = "https://api.telegram.org/bot$token/sendMessage";
+        $keyboard = array(
+                "inline_keyboard" => array(
+                    array(
+                        array(
+                        "text" => "button",
+                        "callback_data" => "button_0"
+                        )
+                    )
+                )
+            );
+        $postfields = array(
+            'chat_id' => "$chatid",
+            'text' => "$reply",
+            'reply_markup' => json_encode($keyboard)
+        );
+
+        if (!$curld = curl_init()) {
+        exit;
+        }
+
+        curl_setopt($curld, CURLOPT_POST, true);
+        curl_setopt($curld, CURLOPT_POSTFIELDS, $postfields);
+        curl_setopt($curld, CURLOPT_URL,$url);
+        curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
+
+        $output = curl_exec($curld);
+
+        curl_close ($curld);
+
+    }
+
+    function send($method, $data){
+        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
+        $url = "https://api.telegram.org/bot".$token. "/" . $method;
+
+        if (!$curld = curl_init()) {
+            exit;
+        }
+        curl_setopt($curld, CURLOPT_POST, true);
+        curl_setopt($curld, CURLOPT_POSTFIELDS, $data);
+        curl_setopt($curld, CURLOPT_URL, $url);
+        curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
+        $output = curl_exec($curld);
+        curl_close($curld);
+        return $output;
+    }
+
+
     private function img($chatid){
         $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
 
-        // $token  = '5962646144:AAEB075ahUqBJ4nMbL_2qpaZ7HmkVc9T-tA';
         $link   = 'https://api.telegram.org/bot'.$token;
 
         $data = [
             'chat_id' => $chatid,
             'photo' => 'https://drocerca.com/bottel/img/atamel.png',
         ];
-        // $url = $link.'/sendPhoto?'.http_build_query($data).'&photo='; 
         $resp = file_get_contents($link."/sendPhoto?".http_build_query($data) );
-        // $resp =   file_get_contents($url);
         return $resp;
     }
     public function struct($message,$chatid,$name){
         $message = strtoupper($message);
+        
         switch($message){
+            case 'prueba':
+                
+                $keyboard = [
+                    'inline_keyboard' => [
+                        [
+                            [
+                            'text' => 'Merida', 
+                            'callback_data' => 'Inventario'
+                            ],
+                            [
+                                'text' => 'Centro', 
+                                'callback_data' => 'Centro'
+                            ],
+                            [
+                                'text' => 'Orinte', 
+                                'callback_data' => 'Orinte'
+                            ],
+                        ]
+                    ]
+                ];
+                $encodedKeyboard = json_encode($keyboard);
+                $parameters = 
+                    array(
+                        'chat_id' => $chatid, 
+                        'text' => $message, 
+                        'reply_markup' => $encodedKeyboard
+                    );
+                
+                $this->send('sendMessage', $parameters); // function description Below
+                break;
             case '/START':
                 $this->start($chatid,$name);
                 break;
@@ -137,18 +242,19 @@ class Chatbot extends controller {
                 $this->inf($chatid);
                 break;
             case '/INVENTARIO':
-                $this->sendMessages($chatid,'Desea Conocer el inventario de alguna Sede: escriba la Sede  Merida  Oriente Centro');
+                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 10'));
+                break;
+            case '/DIRECCION':
+                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 20'));
                 break;
             case '/IMAGEN':
                 $this->img($chatid);
                 break;
             case 'HOLA':
-                $response = 'como estas?';
-                $this->sendMessages($chatid,$response);
+                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 18'));
                 break;
             case 'BIEN':
-                $response = 'en que te puedo ayudar ? neceistas /info ';
-                $this->sendMessages($chatid,$response);
+                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 19'));
             default:
                 $respuesta = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 11'); 
                 $mSQL = str_replace('busqueda', $message, $respuesta); //para buscar la consulta en base de datos 
@@ -161,7 +267,7 @@ class Chatbot extends controller {
                         $response .= ' (Ex.'.nformat($row->existen,0).')';
                         $response .= "\n";
                     }
-                    $this ->sendMessages($chatid,'Merida');
+                    $this ->sendMessages($chatid,$this->datasis->dameval('SELECT comando FROM telegram WHERE id = 11'));
                     $this ->sendMessages($chatid,$response);
                 }
                 $centro = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 12'); 
@@ -175,7 +281,7 @@ class Chatbot extends controller {
                         $response .= ' (Ex.'.nformat($row->existen,0).')';
                         $response .= "\n";
                     }
-                    $this ->sendMessages($chatid,'Centro');
+                    $this ->sendMessages($chatid, $this->datasis->dameval('SELECT comando FROM telegram WHERE id = 12'));
                     $this ->sendMessages($chatid,$response);
                 }
                 $oriente = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 13'); 
@@ -189,7 +295,7 @@ class Chatbot extends controller {
                         $response .= ' (Ex.'.nformat($row->existen,0).')';
                         $response .= "\n";
                     }
-                    $this ->sendMessages($chatid,'Oriente');
+                    $this ->sendMessages($chatid,$this->datasis->dameval('SELECT comando FROM telegram WHERE id = 13'));
                     $this ->sendMessages($chatid,$response);
                 }
             break;
