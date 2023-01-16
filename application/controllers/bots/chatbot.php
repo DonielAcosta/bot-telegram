@@ -20,7 +20,6 @@ class Chatbot extends controller {
         $name      = $update['message']['chat']['first_name'];
         $message   = $update['message']['text'];
 
-
         $this->struct($message,$chatid,$name);
         $this->sedes($chatid,$message);
         $this->direccionSedes($chatid,$message);
@@ -50,49 +49,46 @@ class Chatbot extends controller {
     private function sedes($chatid,$message){ 
         setlocale(LC_ALL, "en_US.utf8");
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
-        switch(strtoupper($message)){
-            case 'MERIDA':
-                $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 15');
-                $this->sendMessages($chatid,$response);
-                $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 15');
+
+        $comando = strtolower($message);
+        $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
+        $consu =$this->datasis->us_ascii2html($resp['descripcion']);
+        $resp2 = $this->datasis->us_ascii2html($resp['consulta']);
+
+        switch(strtolower($message)){
+            case 'inventario merida':
+                $url = $resp2;
                 $this->files($chatid,$url); 
                 break;
-             case 'CENTRO':
-                $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 16');
-                $this->sendMessages($chatid,$response);
-                $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 16');
-                $this->files($chatid,$url);
+             case 'inventario centro':
+                $url = $resp2;
+                $this->files($chatid,$url); 
                  break;
-             case 'ORIENTE':
-                $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 17');
-                $this->sendMessages($chatid,$response);
-                $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 17');
-                $this->files($chatid,$url);
+             case 'inventario oriente':
+                $url = $resp2;
+                $this->files($chatid,$url); 
                  break;
         }
     }
     private function direccionSedes($chatid,$message){
         setlocale(LC_ALL, "en_US.utf8");
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
-        switch(strtoupper($message)){
-            case 'DIRECCION DE MERIDA':
-                $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 21');
-                $this->sendMessages($chatid,$response);
-                $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 21');
-                $this->sendMessages($chatid,$url);
+
+        $comando = strtolower($message);
+        $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
+        $consu =$this->datasis->us_ascii2html($resp['descripcion']);
+        $resp2 = $this->datasis->us_ascii2html($resp['consulta']);
+
+        switch(strtolower($message)){
+            case 'direccion de merida':
+                $this->sendMessages($chatid,$resp2);
                 break;
-             case 'DIRECCION DE CENTRO':
-                $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 22');
-                $this->sendMessages($chatid,$response);
-                $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 22');
-                $this->sendMessages($chatid,$url);
-                 break;
-             case 'DIRECCION DE ORIENTE':
-                $response = $this->datasis->dameval('SELECT descripcion FROM telegram WHERE id = 23');
-                $this->sendMessages($chatid,$response);
-                $url = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 23');
-                $this->sendMessages($chatid,$url);
-                 break;
+             case 'direccion de centro':
+                $this->sendMessages($chatid,$resp2);
+                break;
+             case 'direccion de oriente':
+                $this->sendMessages($chatid,$resp2);
+                break;
         }
     }
     public function files($chatid,$url){
@@ -189,6 +185,10 @@ class Chatbot extends controller {
         }elseif(strtolower($message) === 'imagen'){
             $this->sendMessages($chatid,$resp2);
             $this->img($chatid);
+            die();
+        }elseif(strtolower($message) == 'direccion'){
+            $respuesta = 'Desea conocer la Direccion de una Sede Escriba: Direccion de "Nombre de la sede" ejemplo "direccion de merida"';
+            $this->sendMessages($chatid,$respuesta);
         }
 
         switch(strtolower($message)){
@@ -204,13 +204,9 @@ class Chatbot extends controller {
                 $this->sendMessages($chatid,$resp2);
                 break;
             case '/direccion':
-                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 20'));
+                $this->sendMessages($chatid,$resp2);
                 break;
             case '/imagen':
-                $this->sendMessages($chatid,$resp2);
-                $this->img($chatid);
-                break;
-            case 'imagen':
                 $this->sendMessages($chatid,$resp2);
                 $this->img($chatid);
                 break;
