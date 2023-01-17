@@ -189,6 +189,9 @@ class Chatbot extends controller {
         }elseif(strtolower($message) == 'direccion'){
             $respuesta = 'Desea conocer la Direccion de una Sede Escriba: Direccion de "Nombre de la sede" ejemplo "direccion de merida"';
             $this->sendMessages($chatid,$respuesta);
+        }elseif(strtolower($message) === $message){
+            $this->sendMessages($chatid,$resp2);
+            die();
         }
 
         switch(strtolower($message)){
