@@ -28,10 +28,12 @@ class Chatbot extends controller {
     }
 
     public function sendMessages($chatid,$response){
-        $resp = $this->datasis->damereg("SELECT * FROM bots ");
-        $token = $resp['token'];
+        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
+
+        // $token  = '5962646144:AAEB075ahUqBJ4nMbL_2qpaZ7HmkVc9T-tA';
         $link   = 'https://api.telegram.org/bot'.$token;
         $url = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
+        memowrite($url);
         $resp = file_get_contents($url);
         
     }
@@ -177,22 +179,30 @@ class Chatbot extends controller {
         $consu =$this->datasis->us_ascii2html($resp['descripcion']);
         $resp2 = $this->datasis->us_ascii2html($resp['consulta']);
 
-        // if(strtolower($message) == 'start'){
-        //     $response = 'Hola! <b>'.$name.'</b>'.' '.$resp2;
-        //     $this->sendMessages($chatid,$response);
-        // }elseif(strtolower($message) == 'info'){
-        //     $response =  $resp2;
-        //     $this->sendMessages($chatid,$response);
-        // }elseif(strtolower($message) == 'inventario'){
-        //     $this->sendMessages($chatid,$resp2);
-        // }elseif(strtolower($message) === 'imagen'){
+        if(strtolower($message) == 'start'){
+            $response = 'Hola! <b>'.$name.'</b>'.' '.$resp2;
+            $this->sendMessages($chatid,$response);
+        }
+        if(strtolower($message) == 'info'){
+            $response =  $resp2;
+            $this->sendMessages($chatid,$response);
+        }
+        if(strtolower($message) == 'inventario'){
+            $this->sendMessages($chatid,$resp2);
+        }
+        if(strtolower($message)){
+            $this->db->insert('telegram', array('descripcion'=>$message,'usuarios'=>$name));
+        }
+        // if(strtolower($message) === 'imagen'){
         //     $this->sendMessages($chatid,$resp2);
         //     $this->img($chatid);
         //     die();
-        // }elseif(strtolower($message) == 'direccion'){
+        // }
+        // if(strtolower($message) == 'direccion'){
         //     $respuesta = 'Desea conocer la Direccion de una Sede Escriba: Direccion de "Nombre de la sede" ejemplo "direccion de merida"';
         //     $this->sendMessages($chatid,$respuesta);
-        // }elseif(strtolower($message) === $message){
+        // }
+        //elseif(strtolower($message) === $message){
         //     $this->sendMessages($chatid,$resp2);
         // }
 
