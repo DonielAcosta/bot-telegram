@@ -24,13 +24,11 @@ class Chatbot extends controller {
         $this->inventariosedes($chatid,$message);
         $this->direccionSedes($chatid,$message);
 
-   
     }
 
     public function sendMessages($chatid,$response){
         $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
 
-        // $token  = '5962646144:AAEB075ahUqBJ4nMbL_2qpaZ7HmkVc9T-tA';
         $link   = 'https://api.telegram.org/bot'.$token;
         $url = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
         memowrite($url);
@@ -173,7 +171,6 @@ class Chatbot extends controller {
 
     public function struct($message,$chatid,$name){
 
-
         $comando = strtolower($message);
         $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
         $consu =$this->datasis->us_ascii2html($resp['descripcion']);
@@ -277,5 +274,4 @@ class Chatbot extends controller {
         }
     }
 }
-
 ?>
