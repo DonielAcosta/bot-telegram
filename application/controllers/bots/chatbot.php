@@ -15,15 +15,23 @@ class Chatbot extends controller {
             die();
         }
 
-        $update    = json_decode($getupdate,true);
-        $chatid    = $update['message']['chat']['id'];
-        $name      = $update['message']['chat']['first_name'];
-        $message   = $update['message']['text'];
-
-        $this->struct($message,$chatid,$name);
+        $update         = json_decode($getupdate,true);
+        $message_id     =  $update['message']['message_id'];
+        $chatid         = $update['message']['chat']['id'];
+        $name           = $update['message']['chat']['first_name'];
+        $message        = $update['message']['text'];
+        $date           = $update['message']['date'];
+        $last_name      = $update['message']['chat']['last_name'];
+        $username       = $update['message']['from']['username'];
+        $language_code  = $update['message']['from']['language_code'];
+        $type           = $update['message']['chat']['type'];
+        // $is_bot         = $update['message']['from']['is_bot'];
+ 
+        $this->struct($chatid,$message,$name,$username,$message_id);
         $this->inventariosedes($chatid,$message);
         $this->direccionSedes($chatid,$message);
 
+   
     }
 
     public function sendMessages($chatid,$response){
@@ -31,7 +39,6 @@ class Chatbot extends controller {
 
         $link   = 'https://api.telegram.org/bot'.$token;
         $url = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
-        memowrite($url);
         $resp = file_get_contents($url);
         
     }
@@ -169,7 +176,7 @@ class Chatbot extends controller {
         return $output;
     }
 
-    public function struct($message,$chatid,$name){
+    public function struct($chatid,$message,$name,$username,$message_id){
 
         $comando = strtolower($message);
         $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
@@ -187,22 +194,16 @@ class Chatbot extends controller {
         if(strtolower($message) == 'inventario'){
             $this->sendMessages($chatid,$resp2);
         }
-        if(strtolower($message)){
-            $this->db->insert('telegram', array('descripcion'=>$message,'usuarios'=>$name));
-        }
-        // if(strtolower($message) === 'imagen'){
-        //     $this->sendMessages($chatid,$resp2);
-        //     $this->img($chatid);
-        //     die();
-        // }
-        // if(strtolower($message) == 'direccion'){
-        //     $respuesta = 'Desea conocer la Direccion de una Sede Escriba: Direccion de "Nombre de la sede" ejemplo "direccion de merida"';
-        //     $this->sendMessages($chatid,$respuesta);
-        // }
-        //elseif(strtolower($message) === $message){
-        //     $this->sendMessages($chatid,$resp2);
-        // }
 
+        if(strtolower($message)){
+            $this->db->insert('logtelg', array(
+                'message_id' =>$message_id,
+                'username'=> $username,
+                'id_bot' =>$chatid,
+                'text' =>$message,
+                'first_name'=> $name
+            ));
+        }
         switch(strtolower($message)){
             case '/start':
                 $response = 'Hola! <b>'.$name.'</b>'.' '.$resp2;
@@ -274,4 +275,5 @@ class Chatbot extends controller {
         }
     }
 }
+
 ?>
