@@ -7,62 +7,53 @@ class Chatbot extends controller {
     }
     
     public function index() {
- 
         $getupdate = file_get_contents("php://input"); 
         if(empty($getupdate)){
-            $response = 'No entiendo que me quieres Decir';
-            $this->sendMessages($chatid,$response);
-            die();
+            die('No se recibio ningun mensaje');
         }
 
-        $update         = json_decode($getupdate,true);
-        $message_id     =  $update['message']['message_id'];
-        $chatid         = $update['message']['chat']['id'];
-        $name           = $update['message']['chat']['first_name'];
-        $message        = $update['message']['text'];
-        $date           = $update['message']['date'];
-        $last_name      = $update['message']['chat']['last_name'];
-        $username       = $update['message']['from']['username'];
-        $language_code  = $update['message']['from']['language_code'];
-        $type           = $update['message']['chat']['type'];
-        // $is_bot         = $update['message']['from']['is_bot'];
- 
-        $this->struct($chatid,$message,$name,$username,$message_id);
+        $update  = json_decode($getupdate,true);
+        $this->guardalog($update);
+        $chatid  = $update['message']['chat']['id'];
+        $message = $update['message']['text'];
+
+        $this->struct($update);
         $this->inventariosedes($chatid,$message);
         $this->direccionSedes($chatid,$message);
 
-   
     }
 
     public function sendMessages($chatid,$response){
         $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
 
         $link   = 'https://api.telegram.org/bot'.$token;
-        $url = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
-        $resp = file_get_contents($url);
+        $url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
+        $resp   = file_get_contents($url);
         
     }
-    private function img($chatid){
-        $resp = $this->datasis->damereg("SELECT * FROM bots ");
+    
+    public function img($chatid){
+        $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
 
-        $link   = 'https://api.telegram.org/bot'.$token;
+        $link  = 'https://api.telegram.org/bot'.$token;
 
-        $data = [
+        $data  = [
             'chat_id' => $chatid,
-            'photo' => 'https://drocerca.com/bottel/img/atamel.png',
+            'photo'   => 'https://drocerca.com/bottel/img/atamel.png',
         ];
         $resp = file_get_contents($link."/sendPhoto?".http_build_query($data) );
         return $resp;
     }
-    private function inventariosedes($chatid,$message){ 
+
+    public function inventariosedes($chatid,$message){ 
         setlocale(LC_ALL, "en_US.utf8");
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
 
         $comando = strtolower($message);
-        $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
-        $consu =$this->datasis->us_ascii2html($resp['descripcion']);
-        $resp2 = $this->datasis->us_ascii2html($resp['consulta']);
+        $resp    = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
+        $consu   = $this->datasis->us_ascii2html($resp['descripcion']);
+        $resp2   = $this->datasis->us_ascii2html($resp['consulta']);
 
         switch(strtolower($message)){
             case 'inventario merida':
@@ -79,14 +70,14 @@ class Chatbot extends controller {
                  break;
         }
     }
-    private function direccionSedes($chatid,$message){
+
+    public function direccionSedes($chatid,$message){
         setlocale(LC_ALL, "en_US.utf8");
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
 
         $comando = strtolower($message);
-        $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
-        $consu =$this->datasis->us_ascii2html($resp['descripcion']);
-        $resp2 = $this->datasis->us_ascii2html($resp['consulta']);
+        $resp    = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
+        $resp2   = $this->datasis->us_ascii2html($resp['consulta']);
 
         switch(strtolower($message)){
             case 'direccion de merida':
@@ -100,11 +91,12 @@ class Chatbot extends controller {
                 break;
         }
     }
+
     public function files($chatid,$url){
-        $resp = $this->datasis->damereg("SELECT * FROM bots ");
+        $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
 
-        $link   = 'https://api.telegram.org/bot'.$token;
+        $link  = 'https://api.telegram.org/bot'.$token;
   
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $link ."/sendDocument?chat_id=" . $chatid);
@@ -124,59 +116,33 @@ class Chatbot extends controller {
         curl_close($ch);
     }
 
-    public function tecl($chatid){
-        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
-        $reply = "telegram";
+	// Guarda el mensaje recibido de telegram
+    public function guardalog($registro){
+		$data = [];
+        $data['message_id']     = $registro['message']['message_id'];
+        $data['id_bot']         = $registro['message']['chat']['id'];
+        $data['is_bot']         = $registro['message']['from']['is_bot'];
+        $data['first_name']     = $registro['message']['chat']['first_name'];
+        $data['text']           = $registro['message']['text'];
+        $data['fecha']          = date('Y-m-d H:i:s', $registro['message']['date']);
+        $data['last_name']      = $registro['message']['chat']['last_name'];
+        $data['username']       = $registro['message']['from']['username'];
+        $data['language_code']  = $registro['message']['from']['language_code'];
+        $data['type']           = $registro['message']['chat']['type'];
 
-        $url = "https://api.telegram.org/bot$token/sendMessage";
-        $keyboard = array(
-                "inline_keyboard" => array(
-                    array(
-                        array(
-                        "text" => "button",
-                        "callback_data" => "button_0"
-                        )
-                    )
-                )
-            );
-        $postfields = array(
-            'chat_id' => "$chatid",
-            'text' => "$reply",
-            'reply_markup' => json_encode($keyboard)
-        );
+        $data['xoffset']        = $registro['message']['entities'][0]['offset'];
+        $data['length']         = $registro['message']['entities'][0]['length'];
+        $data['entities_type']  = $registro['message']['entities'][0]['type'];
 
-        if (!$curld = curl_init()) {
-        exit;
-        }
+        memowrite($this->db->insert_string('logtelg',$data));
+        $this->db->insert('logtelg',$data);
+	}
 
-        curl_setopt($curld, CURLOPT_POST, true);
-        curl_setopt($curld, CURLOPT_POSTFIELDS, $postfields);
-        curl_setopt($curld, CURLOPT_URL,$url);
-        curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
+    public function struct($registro){
 
-        $output = curl_exec($curld);
-
-        curl_close ($curld);
-
-    }
-
-    function send($method, $data){
-        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
-        $url = "https://api.telegram.org/bot".$token. "/" . $method;
-
-        if (!$curld = curl_init()) {
-            exit;
-        }
-        curl_setopt($curld, CURLOPT_POST, true);
-        curl_setopt($curld, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($curld, CURLOPT_URL, $url);
-        curl_setopt($curld, CURLOPT_RETURNTRANSFER, true);
-        $output = curl_exec($curld);
-        curl_close($curld);
-        return $output;
-    }
-
-    public function struct($chatid,$message,$name,$username,$message_id){
+        $chatid         = $registro['message']['chat']['id'];
+        $name           = $registro['message']['chat']['first_name'];
+        $message        = $registro['message']['text'];
 
         $comando = strtolower($message);
         $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
@@ -195,15 +161,6 @@ class Chatbot extends controller {
             $this->sendMessages($chatid,$resp2);
         }
 
-        if(strtolower($message)){
-            $this->db->insert('logtelg', array(
-                'message_id' =>$message_id,
-                'username'=> $username,
-                'id_bot' =>$chatid,
-                'text' =>$message,
-                'first_name'=> $name
-            ));
-        }
         switch(strtolower($message)){
             case '/start':
                 $response = 'Hola! <b>'.$name.'</b>'.' '.$resp2;
@@ -265,7 +222,7 @@ class Chatbot extends controller {
                     foreach( $query->result() as $row ){
                         $response .= $row->codigo;
                         $response .= ' '.$row->descrip;
-                        $response .= ' (Ex.'.nformat($row->existen,0).')';
+						$response .= ' (Ex.'.nformat($row->existen,0).')';
                         $response .= "\n";
                     }
                     $this ->sendMessages($chatid,$this->datasis->dameval('SELECT comando FROM telegram WHERE id = 13'));
