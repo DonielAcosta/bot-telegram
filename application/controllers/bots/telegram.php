@@ -111,7 +111,7 @@ class Telegram extends Controller {
 		$grid->params(array(
 			'search'        => 'true',
 			'editable'      => $editar,
-			'width'         => 200,
+			'width'         => 100,
 			'edittype'      => "'text'",
 			'editrules'     => '{ required:true}',
 			'editoptions'   => '{ size:50, maxlength: 50 }',
@@ -123,7 +123,7 @@ class Telegram extends Controller {
 		$grid->params(array(
 			'search'        => 'true',
 			'editable'      => $editar,
-			'width'         => 300,
+			'width'         => 200,
 			'edittype'      => "'text'",
 			'editrules'     => '{ required:true}',
 			'editoptions'   => '{ size:50, maxlength: 50 }',
@@ -139,7 +139,6 @@ class Telegram extends Controller {
 			'editrules'     => '{ required:true}',
 			'editoptions'   => '{ size:50, maxlength: 50 }',
 		));
-
 
 		$grid->showpager(true);
 		$grid->setWidth('');
@@ -279,7 +278,8 @@ class Telegram extends Controller {
 		$edit->comando->size =30;
 		$edit->comando->maxlength =50;
 
-		$edit->descripcion = new inputField('Descripcion','descripcion');
+
+		$edit->descripcion = new textareaField('Descripcion','descripcion');
 		$edit->descripcion->rule='';
 		$edit->descripcion->size =52;
 		$edit->descripcion->maxlength =50;
@@ -337,26 +337,18 @@ class Telegram extends Controller {
 
 	function instalar(){
 		if (!$this->db->table_exists('telegram')) {
-			$mSQL="CREATE TABLE `telegram` (
-			  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-			  `comando` varchar(50) DEFAULT NULL,
-			  `descripcion` varchar(50) DEFAULT NULL,
-			  `consulta` TEXT(100) DEFAULT NULL,
-			  PRIMARY KEY (`id`)
-			) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4";
+			$mSQL="CREATE TABLE telegram (
+		      id            INT(10)    NOT NULL AUTO_INCREMENT,
+			  comando       VARCHAR(100)   NULL DEFAULT '',
+			  descripcion   TEXT           NULL DEFAULT '',
+			  consulta      TEXT           NULL DEFAULT '',
+			  PRIMARY KEY (id)
+			) ENGINE=MyISAM";
 			$this->db->query($mSQL);
 		}
-		$campos = $this->db->list_fields('telegram');
-		if(!in_array('comando', $campos)) {
-			$this->db->query("ALTER TABLE telegram ADD COLUMN comando VARCHAR(50) NULL DEFAULT NULL");
-		}
-		if(!in_array('descripcion', $campos)) {
-			$this->db->query("ALTER TABLE telegram ADD COLUMN descripcion VARCHAR(50) NULL DEFAULT NULL");
-		}
-		if(!in_array('consulta', $campos)) {
-			$this->db->query("ALTER TABLE telegram ADD COLUMN consulta TEXT(200) NULL DEFAULT NULL");
-		}
+		//$campos=$this->db->list_fields('telegram');
 		//if(!in_array('<#campo#>',$campos)){ }
+		
 	}
 }
 

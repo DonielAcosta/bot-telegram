@@ -120,13 +120,12 @@ class Bots extends Controller {
 		));
 
 
-
 		$grid->addField('nombre');
 		$grid->label('Nombre');
 		$grid->params(array(
 			'search'        => 'true',
 			'editable'      => $editar,
-			'width'         => 200,
+			'width'         => 100,
 			'edittype'      => "'text'",
 			'editrules'     => '{ required:true}',
 			'editoptions'   => '{ size:40, maxlength: 40 }',
@@ -150,7 +149,7 @@ class Bots extends Controller {
 		$grid->params(array(
 			'search'        => 'true',
 			'editable'      => $editar,
-			'width'         => 200,
+			'width'         => 100,
 			'edittype'      => "'textarea'",
 			'editoptions'   => "'{rows:2, cols:60}'",
 		));
@@ -165,16 +164,6 @@ class Bots extends Controller {
 			'edittype'      => "'text'",
 			'editrules'     => '{ required:true}',
 			'editoptions'   => '{ size:50, maxlength: 50 }',
-		));
-
-		$grid->addField('comandos');
-		$grid->label('Comandos');
-		$grid->params(array(
-			'search'        => 'true',
-			'editable'      => $editar,
-			'width'         => 100,
-			'edittype'      => "'textarea'",
-			'editoptions'   => "'{rows:2, cols:60}'",
 		));
 
 		$grid->showpager(true);
@@ -393,16 +382,14 @@ class Bots extends Controller {
 		
 		if (!$this->db->table_exists('bots')) {
 			$mSQL="CREATE TABLE `bots` (
-			  `id` int(11) NOT NULL AUTO_INCREMENT,
-			  `nombre` varchar(50) DEFAULT NULL,
-			  `token` varchar(80) DEFAULT NULL,
-			  `descripcion` text DEFAULT NULL,
-			  `url` varchar(100) DEFAULT NULL,
-			  `comandos` text DEFAULT NULL,
-			  PRIMARY KEY (`id`),
-			  UNIQUE KEY `nombre` (`nombre`)
-			) ENGINE=MyISAM AUTO_INCREMENT=13 DEFAULT CHARSET=utf8mb4";
-			$this->db->query($mSQL);
+			  id            INT(10)    NOT NULL AUTO_INCREMENT,
+			  nombre        VARCHAR(50)    NULL DEFAULT '',
+			  token         VARCHAR(80)    NULL DEFAULT '',
+			  descripcion   TEXT           NULL DEFAULT '',
+			  url           VARCHAR(100)   NULL DEFAULT '',
+			  PRIMARY KEY (id)
+			) ENGINE=MyISAM";
+	  		$this->db->query($mSQL);
 		}
 		$campos = $this->db->list_fields('bots');
 		if(!in_array('nombre', $campos)) {
@@ -418,10 +405,7 @@ class Bots extends Controller {
 		if(!in_array('url', $campos)) {
 			$this->db->query("ALTER TABLE bots ADD COLUMN url VARCHAR(50) NULL DEFAULT NULL");
 		}
-		if(!in_array('comandos', $campos)) {
-			$this->db->query("ALTER TABLE bots ADD COLUMN comandos TEXT(200) NULL DEFAULT NULL");
-		}
-		
+	
 		// $a = 'DROP TABLE bots';
 		// $this->db->query($a);
 		//$campos=$this->db->list_fields('bots');

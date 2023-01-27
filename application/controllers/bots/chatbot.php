@@ -41,7 +41,7 @@ class Chatbot extends controller {
      * @param response El mensaje que desea enviar.
     */
     public function sendMessages($chatid,$response){
-        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 13');
+        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
         $link   = 'https://api.telegram.org/bot'.$token;
         $url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response); 
         $resp   = file_get_contents($url);
