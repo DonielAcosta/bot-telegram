@@ -241,8 +241,8 @@ class Chatbot extends controller {
                 break;
 
             default:
-            $respuesta = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 11'); 
-            $mSQL = str_replace('busqueda', $message, $respuesta); //para buscar la consulta en base de datos 
+            $merida = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 11'); 
+            $mSQL = str_replace('busqueda', $message, $merida); //para buscar la consulta en base de datos 
             $query = $this->db->query(''.$mSQL.''); 
             if($query->num_rows() > 0){
                 $response = '';
@@ -271,7 +271,7 @@ class Chatbot extends controller {
             }
 
             $oriente = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 13'); 
-            $mSQL = str_replace('busqueda', $message, $centro); //para buscar la consulta en base de datos 
+            $mSQL = str_replace('busqueda', $message, $oriente); //para buscar la consulta en base de datos 
             $query = $this->db->query(''.$mSQL.''); 
             if($query->num_rows() > 0){
                 $response = '';
