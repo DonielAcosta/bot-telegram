@@ -31,6 +31,7 @@ class Chatbot extends controller {
         $this->struct($update);
         $this->inventariosedes($chatid,$message);
         $this->direccionSedes($chatid,$message);
+        // $this->sendMessages($chatid,'prueba de fallas');  // esto se ustiliza para probar cuando se presenta una falla y hay que detectar donde 
     }
 
     public function sendMessages($chatid,$response){
@@ -60,13 +61,13 @@ class Chatbot extends controller {
         $this->db->insert('logtelg',$data);
     }
 
-    /**
-     * Envía una foto al usuario.
-     * 
-     * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
-     * 
-     * @return La respuesta de la API de Telegram.
-    */
+    // /**
+    //  * Envía una foto al usuario.
+    //  * 
+    //  * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
+    //  * 
+    //  * @return La respuesta de la API de Telegram.
+    // */
     public function img($chatid){
         $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
@@ -80,13 +81,40 @@ class Chatbot extends controller {
         $resp = file_get_contents($link."/sendPhoto?".http_build_query($data) );
         return $resp;
     }
-
     /**
-     * Una función que le permite enviar un archivo al usuario.
+     * Toma una cadena, la convierte a ascii, luego la compara con un campo de la base de datos y, si
+     * coincide, envía un mensaje al usuario.
      * 
-     * @param chatid El ID de chat del usuario que envió el mensaje.
+     * @param chatid La identificación de chat del usuario al que desea enviar el mensaje.
      * @param message El mensaje enviado por el usuario.
-    */
+     */
+    public function direccionSedes($chatid,$message){
+        setlocale(LC_ALL, "en_US.utf8");
+        $message = iconv("utf-8", "ascii//TRANSLIT", $message);
+
+        $comando = strtolower($message);
+        $resp    = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
+        $resp2   = $this->datasis->us_ascii2html($resp['consulta']);
+
+        switch(strtolower($message)){
+            case 'direccion de merida':
+                $this->sendMessages($chatid,$resp2);
+                break;
+             case 'direccion de centro':
+                $this->sendMessages($chatid,$resp2);
+                break;
+             case 'direccion de oriente':
+                $this->sendMessages($chatid,$resp2);
+                break;
+        }
+    }
+
+    // /**
+    //  * Una función que le permite enviar un archivo al usuario.
+    //  * 
+    //  * @param chatid El ID de chat del usuario que envió el mensaje.
+    //  * @param message El mensaje enviado por el usuario.
+    // */
     public function inventariosedes($chatid,$message){ 
         setlocale(LC_ALL, "en_US.utf8");
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
@@ -111,13 +139,13 @@ class Chatbot extends controller {
                  break;
         }
     }
-
-    /**
-     * Envía un archivo al usuario.
-     * 
-     * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
-     * @param url La URL del archivo a enviar.
-    */
+ 
+    // /**
+    //  * Envía un archivo al usuario.
+    //  * 
+    //  * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
+    //  * @param url La URL del archivo a enviar.
+    // */
     public function files($chatid,$url){
         $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
@@ -239,8 +267,7 @@ class Chatbot extends controller {
                     $this ->sendMessages($chatid,$response);
                 }
             break;
+
         }
     }
 }
-
-
