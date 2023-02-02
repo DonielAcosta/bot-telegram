@@ -61,13 +61,13 @@ class Chatbot extends controller {
         $this->db->insert('logtelg',$data);
     }
 
-    // /**
-    //  * Envía una foto al usuario.
-    //  * 
-    //  * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
-    //  * 
-    //  * @return La respuesta de la API de Telegram.
-    // */
+   /**
+    * Envía una foto al usuario.
+    * 
+    * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
+    * 
+    * @return La respuesta de la API de Telegram.
+   */
     public function img($chatid){
         $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
@@ -109,12 +109,12 @@ class Chatbot extends controller {
         }
     }
 
-    // /**
-    //  * Una función que le permite enviar un archivo al usuario.
-    //  * 
-    //  * @param chatid El ID de chat del usuario que envió el mensaje.
-    //  * @param message El mensaje enviado por el usuario.
-    // */
+    /**
+     * Una función que le permite enviar un archivo al usuario.
+     * 
+     * @param chatid El ID de chat del usuario que envió el mensaje.
+     * @param message El mensaje enviado por el usuario.
+    */
     public function inventariosedes($chatid,$message){ 
         setlocale(LC_ALL, "en_US.utf8");
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
@@ -139,13 +139,13 @@ class Chatbot extends controller {
                  break;
         }
     }
- 
-    // /**
-    //  * Envía un archivo al usuario.
-    //  * 
-    //  * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
-    //  * @param url La URL del archivo a enviar.
-    // */
+
+     /**
+      * Envía un archivo al usuario.
+      * 
+      * @param chatid El ID de chat del usuario al que desea enviar el mensaje.
+      * @param url La URL del archivo a enviar.
+     */
     public function files($chatid,$url){
         $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
@@ -178,25 +178,25 @@ class Chatbot extends controller {
 
         $comando = strtolower($message);
         $resp = $this->datasis->damereg("SELECT * FROM telegram  WHERE comando = '$comando'");
-        // $consu =$this->datasis->us_ascii2html($resp['descripcion']);
         $resp2 = $this->datasis->us_ascii2html($resp['consulta']);
 
-        if(strtolower($message) == 'start'){
+        $message = strtolower($message);
+        if($message == 'start'){
             $response = 'Hola! <b>'.$name.'</b>'.' '.$resp2;
             $this->sendMessages($chatid,$response);
         }
-        if(strtolower($message) == 'info'){
+        if($message == 'info'){
             $response =  $resp2;
             $this->sendMessages($chatid,$response);
         }
-        if(strtolower($message) == 'inventario'){
+        if($message == 'inventario'){
             $this->sendMessages($chatid,$resp2);
         }
-        if(strtolower($message) == 'direccion'){
+        if($message == 'direccion'){
             $this->sendMessages($chatid,$resp2);
         }
 
-        switch(strtolower($message)){
+        switch($message){
             case '/start':
                 $response = 'Hola! <b>'.$name.'</b>'.' '.$resp2;
                 $this->sendMessages($chatid,$response);
@@ -216,10 +216,10 @@ class Chatbot extends controller {
                 $this->img($chatid);
                 break;
             case 'hola':
-                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 19'));
+                $this->sendMessages($chatid,$resp2);
                 break;
             case 'bien':
-                $this->sendMessages($chatid,$this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 20'));
+                $this->sendMessages($chatid,$resp2);
                 break;
             default:
                 $merida = $this->datasis->dameval('SELECT consulta FROM telegram WHERE id = 11'); 
