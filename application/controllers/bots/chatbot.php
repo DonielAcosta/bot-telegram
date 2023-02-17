@@ -2,57 +2,71 @@
 /**
  * ProteoERP
  *
- * @autor    Doniel Acosta y Andres Hocevar 
+ * @autor    Doniel Acosta y Andres Hocevar
  * @license  GNU GPL v3
 */
 
 //
 //  Procesa y responde solicitudes del chat de telegram
 class Chatbot extends controller {
+	var $chatid;
+
 	public function __construct() {
 		parent::__construct();
 		$this->load->library('rapyd');
 	}
 
 	public function index() {
-		$mensajentrada = file_get_contents("php://input"); 
+		$mensajentrada = file_get_contents("php://input");
 		if(empty($mensajentrada)){
 			die('No se recibio ningun mensaje');
 		}
 		$entrada = json_decode($mensajentrada,true);
-		
+
 		// Guarda el mensaje entrante
 		$this->guardalog($entrada);
 		$chatid  = $entrada['message']['chat']['id'];
 		$mensaje = $entrada['message']['text'];
 		$nombre  = $entrada['message']['chat']['first_name'];
 
+		$this->chatid = $chatid;
+
 		if(substr($mensaje,1) == '/') return;
 
 		//Detecta si es un comando
 		$respuesta = $this->comandos($mensaje);
 		if (empty($respuesta)){
+			// Procesa comando
 			$msjlimpio = $this->limpia($mensaje);
-			$respuesta = $this->buscainv($msjlimpio);
+			if (!empty($msjlimpio)){
+				$respuesta = $this->buscainv($msjlimpio);
+			} else
+				$respuesta = 'No se encontro ningun resultado';
 		}
+
 		if(!empty($respuesta))
 			$this->sendMessages( $chatid, $respuesta );
-		else 
-			$this->sendMessages( $chatid, 'No se obtuvo ninguna respuesta por favor envia la palabra Ayuda' );
+		else
+			$this->sendMessages( $chatid, 'Gracias por contactarnos, como podemos seguir ayudando? (si necesita saber un poco mas escriba la palabra ayuda' );
 	}
 
+
 	/******************************************************************
-	*       ESTOS SON LOS METODOS PARA PROBAR VAINAS 
+	*       ESTOS SON LOS METODOS PARA PROBAR VAINAS
 	*/
 	//******************************************************************
-	//prueba para funcionalidades 
+	//prueba para funcionalidades
 	function prueba1(){
-		$mensaje = 'traceval y ivermectina dolores montelukast';
+		$mensaje = '.';
 		//Detecta si es un comando
 		$respuesta = $this->comandos($mensaje);
 		if (empty($respuesta)){
 			$msjlimpio = $this->limpia($mensaje);
-			$respuesta = $this->buscainv($msjlimpio);
+			var_dump($msjlimpio);
+			if (!empty($msjlimpio))
+				$respuesta = $this->buscainv($msjlimpio);
+			else
+				$respuesta = 'No se encontro ningun resultado';
 		}
 		echo $respuesta;
 		//$msj = $this->limpia($mensaje);
@@ -77,7 +91,7 @@ class Chatbot extends controller {
         $url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response);
         $resp   = file_get_contents($url);
     }
-    
+
     //******************************************************************
 	// guarda la informacion en base de datos
 	public function guardalog($registro){
@@ -101,7 +115,7 @@ class Chatbot extends controller {
 	//******************************************************************
 	//envia una imagen
 	public function img($chatid){
-		$resp  = $this->datasis->damereg("SELECT * FROM bots ");
+		$resp  = $this->datasis->damereg('SELECT * FROM bots');
 		$token = $resp['token'];
 		$link  = 'https://api.telegram.org/bot'.$token;
 		$data  = [
@@ -111,7 +125,7 @@ class Chatbot extends controller {
 		$resp = file_get_contents($link."/sendPhoto?".http_build_query($data) );
 		return $resp;
 	}
-    
+
     //******************************************************************
     // envia la direccion de una sede
     public function direccionSedes($chatid,$message){
@@ -119,7 +133,7 @@ class Chatbot extends controller {
         $message = iconv("utf-8", "ascii//TRANSLIT", $message);
 
         $comando = strtolower($message);
-        $resp    = $this->datasis->damereg("SELECT * FROM botteleg  WHERE comando = '$comando'");
+        $resp    = $this->datasis->damereg('SELECT * FROM botteleg  WHERE comando=?',array($comando));
         $resp2   = $this->datasis->us_ascii2html($resp['consulta']);
 
         switch(strtolower($message)){
@@ -135,35 +149,35 @@ class Chatbot extends controller {
         }
     }
 
-    //******************************************************************
-    // envia el inventario de una sede
-	public function inventariosedes($chatid,$message){
-		setlocale(LC_ALL, "en_US.utf8");
-		$message = iconv("utf-8", "ascii//TRANSLIT", $message);
-
-		$comando = strtolower($message);
-		$resp    = $this->datasis->damereg("SELECT * FROM botteleg  WHERE comando = '$comando'");
-		$consu   = $this->datasis->us_ascii2html($resp['descripcion']);
-		$resp2   = $this->datasis->us_ascii2html($resp['consulta']);
-	
-		switch(strtolower($message)){
-			case 'inventario merida':
-				$url = $resp2;
-				$this->files($chatid,$url);
-				break;
-			case 'inventario centro':
-				$url = $resp2;
-				$this->files($chatid,$url);
-				break;
-			case 'inventario oriente':
-				$url = $resp2;
-				$this->files($chatid,$url);
-				break;
+	//******************************************************************
+	// Procesa comandos
+	public function comandos($mensaje){
+		$resulta = '';
+		$comando = strtolower($mensaje);
+		$resp    = $this->datasis->damereg("SELECT * FROM botteleg  WHERE comando=? LIMIT 1",array($comando));
+		if(!empty($resp['funcion'])){
+			eval($resp['funcion']);
+			return $resulta;
 		}
+		if (!empty($resp))
+			$resulta   = $this->datasis->us_ascii2html($resp['consulta']);
+		return $resulta;
+
+	}
+
+    //******************************************************************
+    // Envia el inventario de una sede
+	public function inventariosedes($sede,$url){
+		setlocale(LC_ALL, "en_US.utf8");
+		$message = iconv("utf-8", "ascii//TRANSLIT", $sede);
+		$chatid = $this->chatid;
+		$this->files($chatid,$url);
+		return 'Gracias por su interes';
+
 	}
 
 	//******************************************************************
-    //envia un archivo xls,pdf word 
+    //envia un archivo xls,pdf word
     public function files($chatid,$url){
         $resp  = $this->datasis->damereg("SELECT * FROM bots ");
         $token = $resp['token'];
@@ -184,7 +198,6 @@ class Chatbot extends controller {
 
         $result = curl_exec($ch);
 
-        var_dump($result);
         curl_close($ch);
     }
 
@@ -210,7 +223,7 @@ class Chatbot extends controller {
 		$mensajeA = explode(" ",$mensaje);
 		$palabras = $this->datasis->dameareg('SELECT palabra FROM botpexclu');
 		foreach($palabras AS $pala){
-			$esta = array_search($pala['palabra'], $mensajeA); 
+			$esta = array_search($pala['palabra'], $mensajeA);
 			if ($esta !== false ){
 				unset($mensajeA[$esta]);
 			}
@@ -222,14 +235,14 @@ class Chatbot extends controller {
 				unset($mensajeA[$ind]);
 			}
 		}
-		
+
 		// Elimina palabras de menos de 3 letras
 		foreach($mensajeA AS $ind => $msj){
 			if ( strlen($msj) <= 3 ){
 				unset($mensajeA[$ind]);
 			}
 		}
-		
+
 		return $mensajeA;
 	}
 
@@ -254,7 +267,7 @@ class Chatbot extends controller {
 	// Busca medicamentos por sedes
 	public function buscainv($mensaje){
 		$salida = '';
-		
+
 		$mSQL  = $this->construsql('merida',$mensaje);
 		$query = $this->db->query($mSQL);
 		if($query->num_rows() > 0){
@@ -297,17 +310,6 @@ class Chatbot extends controller {
 		return $salida;
 	}
 
-	//******************************************************************
-	// Procesa comandos
-	public function comandos($mensaje){
-		$resp2   = '';
-		$comando = strtolower($mensaje);
-		$resp    = $this->datasis->damereg("SELECT consulta FROM botteleg  WHERE comando=? LIMIT 1",array($comando));
-		if (!empty($resp))
-			$resp2   = $this->datasis->us_ascii2html($resp['consulta']);
-		return $resp2;
-		
-	}
 
 	//******************************************************************
 	// Procesa entrada
