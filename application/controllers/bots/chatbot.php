@@ -40,7 +40,7 @@ class Chatbot extends controller {
 			$msjlimpio = $this->limpia($mensaje);
 			if (!empty($msjlimpio)){
 				$respuesta = $this->buscainv($msjlimpio);
-			} else
+			}else
 				$respuesta = 'No se encontro ningun resultado';
 		}
 
@@ -48,7 +48,9 @@ class Chatbot extends controller {
 			$this->sendMessages( $chatid, $respuesta );
 		else
 			$this->sendMessages( $chatid, 'Gracias por contactarnos, como podemos seguir ayudando? (si necesita saber un poco mas escriba la palabra ayuda' );
+
 	}
+
 
 
 	/******************************************************************
@@ -71,7 +73,7 @@ class Chatbot extends controller {
 		echo $respuesta;
 		//$msj = $this->limpia($mensaje);
 		//echo $this->buscainv($msj);
-    }
+	}
 
 
 	//******************************************************************
@@ -82,17 +84,48 @@ class Chatbot extends controller {
 		$this->sendMessages($chatid,$probando);
 	}
 
+	//******************************************************************
+	// convertir svg a png
+
+	//Para instalar la extensión php-imagick en OpenSUSE, primero debes agregar el repositorio "PHP extensions" utilizando el siguiente comando:
+	//sudo zypper ar https://download.opensuse.org/repositories/devel:/languages:/php/openSUSE_Tumbleweed/ PHP-extensions
+	// sudo zypper in php7-imagick
+	// verificar que se insatlo php -m | grep imagick
+
+	public function convertir($url){
+
+		// Crea un objeto de imagen a partir del archivo SVG
+		$nombre = basename($url); // "imagemn.svg"
+		$png = pathinfo($nombre, PATHINFO_FILENAME) . '.png';
+
+		$image = new Imagick();
+		$image->readImage($url);
+
+		// Convierte la imagen a formato PNG
+		$image->setImageFormat('png');
+
+		// Ruta al archivo PNG de salida esta es la del servidor que va aca para poder pasar a otra funcion
+		$ruta = '/srv/www/htdocs/proteoerp/system/application/controllers/bots/'.$png;
+		// Guarda la imagen PNG en un archivo
+		$image->writeImage($ruta);
+		unlink($ruta);
+		// Liberar recursos de memoria
+		$image->clear();
+		$image->destroy();
+		echo $ruta;
+
+	}
 
 	//******************************************************************
 	// Envia mensajes
-    public function sendMessages($chatid,$response){
-        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
-        $link   = 'https://api.telegram.org/bot'.$token;
-        $url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response);
-        $resp   = file_get_contents($url);
-    }
+	public function sendMessages($chatid,$response){
+		$token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
+		$link   = 'https://api.telegram.org/bot'.$token;
+		$url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response);
+		$resp   = file_get_contents($url);
+	}
 
-    //******************************************************************
+	//******************************************************************
 	// guarda la informacion en base de datos
 	public function guardalog($registro){
 		$data = [];
@@ -112,42 +145,78 @@ class Chatbot extends controller {
 		$this->db->insert('logtelg',$data);
 	}
 
+	/******************************************************************
+	*       ESTOS SON LOS METODOS PARA IMAGENES
+	*/
+	//******************************************************************
 	//******************************************************************
 	//envia una imagen
-	public function img($chatid){
+	public function img($chatid,$url){
 		$resp  = $this->datasis->damereg('SELECT * FROM bots');
 		$token = $resp['token'];
 		$link  = 'https://api.telegram.org/bot'.$token;
 		$data  = [
 			'chat_id' => $chatid,
-			'photo'   => 'https://drocerca.com/bottel/img/atamel.png',
+			// 'photo'   => 'https://drocerca.com/bottel/img/atamel.png',
+			'photo'   => $url,
+
 		];
 		$resp = file_get_contents($link."/sendPhoto?".http_build_query($data) );
 		return $resp;
 	}
 
-    //******************************************************************
-    // envia la direccion de una sede
-    public function direccionSedes($chatid,$message){
-        setlocale(LC_ALL, "en_US.utf8");
-        $message = iconv("utf-8", "ascii//TRANSLIT", $message);
+	//******************************************************************
+	//envia una imagen version 2
+	function sendPhoto($chatid, $url) {
+		$resp  = $this->datasis->damereg('SELECT * FROM bots');
+		$token = $resp['token'];
+		$api_url = 'https://api.telegram.org/bot' . $token . '/sendPhoto';
 
-        $comando = strtolower($message);
-        $resp    = $this->datasis->damereg('SELECT * FROM botteleg  WHERE comando=?',array($comando));
-        $resp2   = $this->datasis->us_ascii2html($resp['consulta']);
+		$post_fields = [
+			'chat_id' => $chatid,
+			'photo' => $url,
+		];
 
-        switch(strtolower($message)){
-            case 'direccion de merida':
-                $this->sendMessages($chatid,$resp2);
-                break;
-             case 'direccion de centro':
-                $this->sendMessages($chatid,$resp2);
-                break;
-             case 'direccion de oriente':
-                $this->sendMessages($chatid,$resp2);
-                break;
-        }
-    }
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+			"Content-Type:multipart/form-data"
+		));
+		curl_setopt($ch, CURLOPT_URL, $api_url);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
+		$output = curl_exec($ch);
+
+		if (curl_errno($ch)) {
+			echo 'Error:' . curl_error($ch);
+		}
+
+		curl_close($ch);
+
+		return $output;
+	}
+
+	//******************************************************************
+	// envia la direccion de una sede
+	public function direccionSedes($chatid,$message){
+		setlocale(LC_ALL, "en_US.utf8");
+		$message = iconv("utf-8", "ascii//TRANSLIT", $message);
+
+		$comando = strtolower($message);
+		$resp    = $this->datasis->damereg('SELECT * FROM botteleg  WHERE comando=?',array($comando));
+		$resp2   = $this->datasis->us_ascii2html($resp['consulta']);
+
+		switch(strtolower($message)){
+			case 'direccion de merida':
+				$this->sendMessages($chatid,$resp2);
+				break;
+			case 'direccion de centro':
+				$this->sendMessages($chatid,$resp2);
+				break;
+			case 'direccion de oriente':
+				$this->sendMessages($chatid,$resp2);
+				break;
+		}
+	}
 
 	//******************************************************************
 	// Procesa comandos
@@ -165,8 +234,8 @@ class Chatbot extends controller {
 
 	}
 
-    //******************************************************************
-    // Envia el inventario de una sede
+	//******************************************************************
+	// Envia el inventario de una sede
 	public function inventariosedes($sede,$url){
 		setlocale(LC_ALL, "en_US.utf8");
 		$message = iconv("utf-8", "ascii//TRANSLIT", $sede);
@@ -177,29 +246,29 @@ class Chatbot extends controller {
 	}
 
 	//******************************************************************
-    //envia un archivo xls,pdf word
-    public function files($chatid,$url){
-        $resp  = $this->datasis->damereg("SELECT * FROM bots ");
-        $token = $resp['token'];
+	//envia un archivo xls,pdf word
+	public function files($chatid,$url){
+		$resp  = $this->datasis->damereg("SELECT * FROM bots ");
+		$token = $resp['token'];
 
-        $link  = 'https://api.telegram.org/bot'.$token;
+		$link  = 'https://api.telegram.org/bot'.$token;
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $link ."/sendDocument?chat_id=" . $chatid);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POST, 1);
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $link ."/sendDocument?chat_id=" . $chatid);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_POST, 1);
 
-        $finfo = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $url );
-        $cFile = new CURLFile($url , $finfo);
+		$finfo = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $url );
+		$cFile = new CURLFile($url , $finfo);
 
-        curl_setopt($ch, CURLOPT_POSTFIELDS, [
-            "document" => $cFile
-        ]);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, [
+			"document" => $cFile
+		]);
 
-        $result = curl_exec($ch);
+		$result = curl_exec($ch);
 
-        curl_close($ch);
-    }
+		curl_close($ch);
+	}
 
 	//******************************************************************
 	// Limpia de caracteres irrelevantes
@@ -211,7 +280,7 @@ class Chatbot extends controller {
 		foreach($simbolos AS $simbo){
 			$mensaje = str_replace($simbo, '', $mensaje);
 		}
-        // Elimina espacios seguidos
+		// Elimina espacios seguidos
 		$tiene = strstr($mensaje,"  ");
 		while ($tiene){
 			$mensaje = str_replace('  ', ' ', $mensaje);
@@ -328,45 +397,49 @@ class Chatbot extends controller {
 			$response = 'Hola! <b>'.$nombre.'</b>'.' '.$resp2;
 			$this->sendMessages($chatid,$response);
 		}
-        if($texto == 'info'){
-            $response =  $resp2;
-            $this->sendMessages($chatid,$response);
-        }
-        if($texto == 'inventario'){
-            $this->sendMessages($chatid,$resp2);
-        }
-        if($texto == 'direccion'){
-            $this->sendMessages($chatid,$resp2);
-        }
+		if($texto == 'start' ||$texto == 'iniciar' ){
+		$response = 'Hola! <b>'.$nombre.'</b>'.' ' .'Este bot esta a su disposicion para consultas y revision de existencias';
+			$this->sendMessages($chatid,$response);
+		}
+		if($texto == 'info'){
+			$response =  $resp2;
+			$this->sendMessages($chatid,$response);
+		}
+		if($texto == 'inventario'){
+			$this->sendMessages($chatid,$resp2);
+		}
+		if($texto == 'direccion'){
+			$this->sendMessages($chatid,$resp2);
+		}
 
-        switch($texto){
-            case '/start':
-                $response = 'Hola! <b>'.$nombre.'</b>'.' '.$resp2;
-                $this->sendMessages($chatid,$response);
-                break;
-            case '/info':
-                $response = $resp2;
-                $this->sendMessages($chatid,$response);
-                break;
-            case '/inventario':
-                $this->sendMessages($chatid,$resp2);
-                break;
-            case '/direccion':
-                $this->sendMessages($chatid,$resp2);
-                break;
-            case '/imagen':
-                $this->sendMessages($chatid,$resp2);
-                $this->img($chatid);
-                break;
-            case 'hola':
-                $this->sendMessages($chatid,$resp2);
-                break;
-            case 'bien':
-                $this->sendMessages($chatid,$resp2);
-                break;
-            default:
-                $this->buscainv($chatid,$mensaje);
-            break;
-        }
-    }
+		switch($texto){
+			case '/start':
+				$response = 'Hola! <b>'.$nombre.'</b>'.' '.$resp2;
+				$this->sendMessages($chatid,$response);
+				break;
+			case '/info':
+				$response = $resp2;
+				$this->sendMessages($chatid,$response);
+				break;
+			case '/inventario':
+				$this->sendMessages($chatid,$resp2);
+				break;
+			case '/direccion':
+				$this->sendMessages($chatid,$resp2);
+				break;
+			case '/imagen':
+				$this->sendMessages($chatid,$resp2);
+				$this->img($chatid);
+				break;
+			case 'hola':
+				$this->sendMessages($chatid,$resp2);
+				break;
+			case 'bien':
+				$this->sendMessages($chatid,$resp2);
+				break;
+			default:
+				$this->buscainv($chatid,$mensaje);
+			break;
+		}
+	}
 }
