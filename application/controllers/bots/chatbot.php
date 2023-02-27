@@ -2,20 +2,26 @@
 /**
  * ProteoERP
  *
- * @autor    Doniel Acosta y Andres Hocevar
+ * @autor    Doniel Acosta y Andres Hocevar 
  * @license  GNU GPL v3
-*/
+ */
+
 
 //
 //  Procesa y responde solicitudes del chat de telegram
 class Chatbot extends controller {
+	
 	var $chatid;
+	var $token;
 
 	public function __construct() {
 		parent::__construct();
 		$this->load->library('rapyd');
 	}
 
+
+	//******************************************************************
+	// Funcion principal
 	public function index() {
 		$mensajentrada = file_get_contents("php://input");
 		if(empty($mensajentrada)){
@@ -25,17 +31,13 @@ class Chatbot extends controller {
 
 		// Guarda el mensaje entrante
 		$this->guardalog($entrada);
+
 		$chatid  = $entrada['message']['chat']['id'];
 		$mensaje = $entrada['message']['text'];
 		$nombre  = $entrada['message']['chat']['first_name'];
-
-		$texto = strtolower($mensaje);
-		if($texto == '/start'){
-			$response = 'Hola! <b>'.$nombre.'</b>'.' '.'si necesita saber un poco mas escriba la palabra ayuda';
-			$this->sendMessages($chatid,$response);
-			die();
-		}
+        // $this->sendMessages($chatid,'prueba de fallas');  // esto se ustiliza para probar cuando se presenta una falla y hay que detectar donde
 		$this->chatid = $chatid;
+		// $this->token = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
 
 		if(substr($mensaje,1) == '/') return;
 
@@ -44,63 +46,81 @@ class Chatbot extends controller {
 		if (empty($respuesta)){
 			// Procesa comando
 			$msjlimpio = $this->limpia($mensaje);
-			if (!empty($msjlimpio)){
+			if (!empty($msjlimpio))
 				$respuesta = $this->buscainv($msjlimpio);
-			} else
+			else
 				$respuesta = 'No se encontro ningun resultado';
 		}
 
 		if(!empty($respuesta))
 			$this->sendMessages( $chatid, $respuesta );
 		else
-			$this->sendMessages( $chatid, 'Gracias por contactarnos, como podemos seguir ayudando? (si necesita saber un poco mas escriba la palabra ayuda' );
+			$this->sendMessages( $chatid, 'Disculpe no se encontro ninguna coincidencia, intente de nuevo!. Si necesita ayuda escriba la palabra "ayuda", gracias.' );
 	}
 
-
-	/******************************************************************
-	*       ESTOS SON LOS METODOS PARA PROBAR VAINAS
-	*/
 	//******************************************************************
-	//prueba para funcionalidades
-	function prueba1(){
-		$mensaje = 'atamel;';
+	// Pruebar funcionalidades
+	public function prueba1(){
+		$this->chatid = 1;
+		$this->token = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
+
+		$mensaje = 'ibuprofeno 100';
+
 		//Detecta si es un comando
 		$respuesta = $this->comandos($mensaje);
 		if (empty($respuesta)){
 			$msjlimpio = $this->limpia($mensaje);
-			var_dump($msjlimpio);
+			//var_dump($msjlimpio);
 			if (!empty($msjlimpio))
 				$respuesta = $this->buscainv($msjlimpio);
 			else
 				$respuesta = 'No se encontro ningun resultado';
 		}
-		echo $respuesta;
+
+
+		if (empty($respuesta))
+			$respuesta = 'No se encontro ningun resultado';
+
+
+		echo 'Disculpe no se encontro ningun resultado, intente de nuevo! ';
+
+		if(!empty($respuesta))
+			$this->sendMessages( 0, $respuesta, true );
+		else
+			$this->sendMessages( 0, 'Disculpe no se encontro ninguna coincidencia, intente de nuevo!. Si necesita ayuda escriba la palabra "ayuda", gracias.', true );
+
+
+		//echo $this->imagen('https://drocerca.com/bottel/img/atamel.png');
 		//$msj = $this->limpia($mensaje);
 		//echo $this->buscainv($msj);
-    }
-
+	}
 
 	//******************************************************************
 	// Para probar
 	public function prueba($message,$chatid){
 		$probando = $this->limpia($message,$chatid);
-		$this->sendMessages($chatid,'paso por aqui');
-		$this->sendMessages($chatid,$probando);
+		$this->sendMessages($chatid,'paso por aqui',true);
+		$this->sendMessages($chatid,$probando,true);
 	}
-
 
 	//******************************************************************
 	// Envia mensajes
-    public function sendMessages($chatid,$response){
-        $token  = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
-        $link   = 'https://api.telegram.org/bot'.$token;
-        $url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response);
-        $resp   = file_get_contents($url);
-    }
+	public function sendMessages($chatid,$response, $debug=false){
+		// $token  = $this->token; //>datasis->dameval('SELECT token FROM bots WHERE id = 1');
+		$token = $this->token = $this->datasis->dameval('SELECT token FROM bots WHERE id = 1');
+		$link   = 'https://api.telegram.org/bot'.$token;
+		$url    = $link.'/sendMessage?chat_id='.$chatid.'&parse_mode=HTML&text='.urlencode($response);
+		if($debug)
+			echo $url;
+		else
+			$resp   = file_get_contents($url);
 
-    //******************************************************************
-	// guarda la informacion en base de datos
+	}
+
+	//******************************************************************
+	// Guarda la informacion en base de datos
 	public function guardalog($registro){
+		if (!isset($registro['message'])) return;
 		$data = [];
 		$data['message_id']     = $registro['message']['message_id'];
 		$data['id_bot']         = $registro['message']['chat']['id'];
@@ -118,79 +138,45 @@ class Chatbot extends controller {
 		$this->db->insert('logtelg',$data);
 	}
 
-    /******************************************************************
-	*       ESTOS SON LOS METODOS PARA IMAGENES
-	*/
 	//******************************************************************
-	//******************************************************************
-	//envia una imagen
-	public function img($chatid,$url){
-		$resp  = $this->datasis->damereg('SELECT * FROM bots');
-		$token = $resp['token'];
-		$link  = 'https://api.telegram.org/bot'.$token;
-		$data  = [
+	// Envia una imagen
+	public function imagen($foto){
+		//$resp  = $this->datasis->damereg('SELECT * FROM bots');
+		$chatid = $this->chatid;
+		$token  = $this->token; //resp['token'];
+		$link   = 'https://api.telegram.org/bot'.$token;
+		$data   = [
 			'chat_id' => $chatid,
-			// 'photo'   => 'https://drocerca.com/bottel/img/atamel.png',
-			'photo'   => $url,
-
+			'photo'   => $foto    //'https://drocerca.com/bottel/img/atamel.png'
 		];
 		$resp = file_get_contents($link."/sendPhoto?".http_build_query($data) );
 		return $resp;
 	}
 
 	//******************************************************************
-	//envia una imagen version 2
-	function sendPhoto($chatid, $url) {
-		$resp  = $this->datasis->damereg('SELECT * FROM bots');
-		$token = $resp['token'];
-		$api_url = 'https://api.telegram.org/bot' . $token . '/sendPhoto';
+	// Envia la direccion de una sede
+	public function direccionSedes($chatid,$message){
+		setlocale(LC_ALL, "en_US.utf8");
+		$message = iconv("utf-8", "ascii//TRANSLIT", $message);
 
-		$post_fields = [
-			'chat_id' => $chatid,
-			'photo' => $url,
-		];
+		$comando = strtolower($message);
+		$resp    = $this->datasis->damereg('SELECT * FROM botteleg  WHERE comando=?',array($comando));
+		$resp2   = $this->datasis->us_ascii2html($resp['consulta']);
 
-		$ch = curl_init();
-		curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-			"Content-Type:multipart/form-data"
-		));
-		curl_setopt($ch, CURLOPT_URL, $api_url);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_POSTFIELDS, $post_fields);
-		$output = curl_exec($ch);
+		switch(strtolower($message)){
+			case 'direccion de merida':
+				$this->sendMessages($chatid,$resp2);
+				break;
 
-		if (curl_errno($ch)) {
-			echo 'Error:' . curl_error($ch);
+			case 'direccion de centro':
+				$this->sendMessages($chatid,$resp2);
+				break;
+
+			case 'direccion de oriente':
+				$this->sendMessages($chatid,$resp2);
+				break;
 		}
-
-		curl_close($ch);
-
-		return $output;
 	}
-
-
-    //******************************************************************
-    // envia la direccion de una sede
-    public function direccionSedes($chatid,$message){
-        setlocale(LC_ALL, "en_US.utf8");
-        $message = iconv("utf-8", "ascii//TRANSLIT", $message);
-
-        $comando = strtolower($message);
-        $resp    = $this->datasis->damereg('SELECT * FROM botteleg  WHERE comando=?',array($comando));
-        $resp2   = $this->datasis->us_ascii2html($resp['consulta']);
-
-        switch(strtolower($message)){
-            case 'direccion de merida':
-                $this->sendMessages($chatid,$resp2);
-                break;
-             case 'direccion de centro':
-                $this->sendMessages($chatid,$resp2);
-                break;
-             case 'direccion de oriente':
-                $this->sendMessages($chatid,$resp2);
-                break;
-        }
-    }
 
 	//******************************************************************
 	// Procesa comandos
@@ -205,47 +191,41 @@ class Chatbot extends controller {
 		if (!empty($resp))
 			$resulta   = $this->datasis->us_ascii2html($resp['consulta']);
 		return $resulta;
-
 	}
 
-    //******************************************************************
-    // Envia el inventario de una sede
+	//******************************************************************
+	// Envia el inventario de una sede
 	public function inventariosedes($sede,$url){
 		setlocale(LC_ALL, "en_US.utf8");
 		$message = iconv("utf-8", "ascii//TRANSLIT", $sede);
 		$chatid = $this->chatid;
 		$this->files($chatid,$url);
 		return 'Gracias por su interes';
-
 	}
 
 	//******************************************************************
-    //envia un archivo xls,pdf word
-    public function files($chatid,$url){
-        $resp  = $this->datasis->damereg("SELECT * FROM bots ");
-        $token = $resp['token'];
+	// Envia un archivo xls,pdf word
+	public function files($chatid,$url){
+		// //$resp  = $this->datasis->damereg("SELECT * FROM bots ");
+		// $token = $token; //resp['token'];
+	 $resp  = $this->datasis->damereg("SELECT * FROM bots ");
+			$token = $resp['token'];
+		$link  = 'https://api.telegram.org/bot'.$token;
 
-        $link  = 'https://api.telegram.org/bot'.$token;
+		$ch = curl_init();
+		curl_setopt($ch, CURLOPT_URL, $link ."/sendDocument?chat_id=" . $chatid);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+		curl_setopt($ch, CURLOPT_POST, 1);
 
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $link ."/sendDocument?chat_id=" . $chatid);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_POST, 1);
-
-        $finfo = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $url );
-        $cFile = new CURLFile($url , $finfo);
-
-        curl_setopt($ch, CURLOPT_POSTFIELDS, [
-            "document" => $cFile
-        ]);
-
-        $result = curl_exec($ch);
-
-        curl_close($ch);
+		$finfo = finfo_file(finfo_open(FILEINFO_MIME_TYPE), $url );
+		$cFile = new CURLFile($url , $finfo);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, ["document" => $cFile]);
+		$result = curl_exec($ch);
+		curl_close($ch);
     }
 
 	//******************************************************************
-	// Limpia de caracteres irrelevantes
+	// Limpia el mensaje recibido de caracteres y palabras irrelevantes
 	public function limpia($mensaje) {
 		if(empty($mensaje)) return false;
 
@@ -254,7 +234,7 @@ class Chatbot extends controller {
 		foreach($simbolos AS $simbo){
 			$mensaje = str_replace($simbo, '', $mensaje);
 		}
-        // Elimina espacios seguidos
+		// Elimina espacios seguidos
 		$tiene = strstr($mensaje,"  ");
 		while ($tiene){
 			$mensaje = str_replace('  ', ' ', $mensaje);
@@ -267,42 +247,38 @@ class Chatbot extends controller {
 		$palabras = $this->datasis->dameareg('SELECT palabra FROM botpexclu');
 		foreach($palabras AS $pala){
 			$esta = array_search($pala['palabra'], $mensajeA);
-			if ($esta !== false ){
-				unset($mensajeA[$esta]);
-			}
+			if ($esta !== false ) unset($mensajeA[$esta]);
 		}
 
 		// Elimina numeros
 		foreach($mensajeA AS $ind => $msj){
-			if ( is_numeric($msj) ){
-				unset($mensajeA[$ind]);
-			}
+			if ( is_numeric($msj)) unset($mensajeA[$ind]);
 		}
 
 		// Elimina palabras de menos de 3 letras
 		foreach($mensajeA AS $ind => $msj){
-			if ( strlen($msj) <= 3 ){
-				unset($mensajeA[$ind]);
-			}
+			if ( strlen($msj) < 3 ) unset($mensajeA[$ind]);
 		}
-
 		return $mensajeA;
 	}
 
-
 	//******************************************************************
 	// Busca medicamentos por sedes
-	function construsql($comando,$mensaje){
+	public function construsql($comando,$mensaje){
 		$dbcomando = $this->db->escape($comando);
 		$mSQL = '';
+		$mBUS = '';
 		foreach($mensaje AS $busca){
-			$consulta = $this->datasis->dameval('SELECT consulta FROM botteleg WHERE comando=?',array($comando));
-			if ($mSQL == '')
-				$mSQL .= str_replace('busqueda', $busca, $consulta);
+			if ($mBUS == '')
+				$mBUS .= '"%'.$busca.'%"';
 			else
-				$mSQL .= ' UNION ALL '.str_replace('busqueda', $busca, $consulta);
+				$mBUS .= ' AND a.descrip LIKE "%'.$busca.'%"';
 		}
-		if(empty($mSQL)) 
+
+		$consulta = $this->datasis->dameval('SELECT consulta FROM botteleg WHERE comando='.$dbcomando);
+		$mSQL .= str_replace('"%busqueda%"', $mBUS, $consulta);
+
+		if(empty($mSQL))
 			return '';
 		else
 			return $mSQL.' LIMIT 20';
@@ -343,7 +319,7 @@ class Chatbot extends controller {
 			}
 		}
 
-		$mSQL  = $this->construsql('centro',$mensaje);
+		$mSQL  = $this->construsql('oriente',$mensaje);
 		if(!empty($mSQL)){
 			$query = $this->db->query(''.$mSQL.'');
 			if($query->num_rows() > 0){
@@ -357,13 +333,12 @@ class Chatbot extends controller {
 				$salida .= "\n*****ORIENTE*****\n".$response;
 			}
 		}
-
 		return $salida;
 	}
 
-
 	//******************************************************************
 	// Procesa entrada
+ /*
 	public function procesaentrada($chatid,$mensaje,$nombre){
 		$texto   = $this->limpia($mensaje);
 
@@ -375,8 +350,8 @@ class Chatbot extends controller {
 		$resp2   = $this->datasis->us_ascii2html($resp['consulta']);
 
 		$texto = strtolower($texto);
-		if($texto == '/start'){
-			$response = 'Hola! <b>'.$nombre.'</b>'.' '.'si necesita saber un poco mas escriba la palabra ayuda';
+		if($texto == 'start'){
+			$response = 'Hola! <b>'.$nombre.'</b>'.' '.$resp2;
 			$this->sendMessages($chatid,$response);
 		}
         if($texto == 'info'){
@@ -418,6 +393,9 @@ class Chatbot extends controller {
             default:
                 $this->buscainv($chatid,$mensaje);
             break;
-        }
-    }
+		}
+	}
+ */
+
 }
+
